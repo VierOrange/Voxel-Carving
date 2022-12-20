@@ -7,5 +7,5 @@ include("${OpenCV_LIB_PATH}/OpenCVConfig.cmake")
 #find_package( OpenCV REQUIRED )
 
 include_directories( ${OpenCV_INCLUDE_DIRS} )
-add_executable( Voxel_Carving main.cpp )
+add_executable( Voxel_Carving main.cpp calibration.cpp)
 target_link_libraries( Voxel_Carving ${OpenCV_LIBS} )
