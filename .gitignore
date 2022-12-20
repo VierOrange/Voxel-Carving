@@ -34,3 +34,9 @@
 # Build folder
 */Build
 */build
+
+# Include folder
+include/
+
+# VScode folder
+/.vscode
