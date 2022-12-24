@@ -32,11 +32,10 @@
 *.app
 
 # Build folder
-*/Build
-*/build
+/build
 
 # Include folder
-include/
+include/opencv2
 
 # VScode folder
 /.vscode
