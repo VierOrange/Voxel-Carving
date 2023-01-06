@@ -10,8 +10,14 @@ include("${OpenCV_LIB_PATH}/OpenCVConfig.cmake")
 
 include_directories( ${OpenCV_INCLUDE_DIRS} include)
 file(GLOB SRC "src/*.cpp")
-add_executable( ${PROJECT_NAME} ${SRC} )
-target_link_libraries( ${PROJECT_NAME} ${OpenCV_LIBS} )
+# add_executable( ${PROJECT_NAME} ${SRC} )
+# target_link_libraries( ${PROJECT_NAME} ${OpenCV_LIBS} )
 
+add_executable(create_aruco_border src/create_aruco_border.cpp)
+target_link_libraries( create_aruco_border ${OpenCV_LIBS} )
+add_executable(pose_estimation_aruco_border src/pose_estimation_aruco_border.cpp)
+target_link_libraries( pose_estimation_aruco_border ${OpenCV_LIBS} )
+add_executable( camera_calibration src/camera_calibration.cpp )
+target_link_libraries( camera_calibration ${OpenCV_LIBS} )
 
 
