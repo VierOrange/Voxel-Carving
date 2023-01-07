@@ -1,5 +1,5 @@
 // by Xing Zhou
-// args: -w=5 -h=7 -l=100 -s=20 -d=15 -c=config/out_camera_data.yml
+// args: -w=5 -h=7 -l=100 -s=20 -d=15 -c=config/out_camera_data.yml -v=data/[image_to_be_read]
 
 #include <opencv2/highgui.hpp>
 #include <opencv2/aruco.hpp>
@@ -22,6 +22,7 @@ const char* keys  =
         "DICT_6X6_50=8, DICT_6X6_100=9, DICT_6X6_250=10, DICT_6X6_1000=11, DICT_7X7_50=12,"
         "DICT_7X7_100=13, DICT_7X7_250=14, DICT_7X7_1000=15, DICT_ARUCO_ORIGINAL = 16}"
         "{c        |       | Output file with calibrated camera parameters }"
+        "{v        |       | Input from video or image file, if omitted, input comes from camera }"
         "{ci       | 0     | Camera id if input doesnt come from video (-v) }"
         "{rs       |       | Apply refind strategy }";
 
@@ -55,6 +56,12 @@ int main(int argc, char *argv[]) {
     Ptr<aruco::DetectorParameters> detectorParams = aruco::DetectorParameters::create();
     detectorParams->cornerRefinementMethod = aruco::CORNER_REFINE_SUBPIX; // do corner refinement in markers
 
+    String video;
+    if(parser.has("v")) {
+        video = parser.get<String>("v");
+        cout << video << endl;
+    }
+
     if(!parser.check()) {
         parser.printErrors();
         return 0;
@@ -72,8 +79,13 @@ int main(int argc, char *argv[]) {
 
     VideoCapture inputVideo;
     int waitTime;
-    inputVideo.open(camId);
-    waitTime = 10;
+    if(!video.empty()) {
+        inputVideo.open(video);
+        waitTime = 0;
+    } else {
+        inputVideo.open(camId);
+        waitTime = 10;
+    }
 
     float axisLength = 0.5f * ((float)min(markersX, markersY) * (markerLength + markerSeparation) +
                                markerSeparation);

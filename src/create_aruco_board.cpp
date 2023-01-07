@@ -1,5 +1,5 @@
 // by Xing Zhou
-// args: data/aruco_border.png -w=5 -h=7 -l=100 -s=20 -d=15"
+// args: data/aruco_board.png -w=5 -h=7 -l=100 -s=20 -d=15
 
 #include <opencv2/highgui.hpp>
 #include <opencv2/aruco.hpp>
