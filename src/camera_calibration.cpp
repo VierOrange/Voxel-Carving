@@ -114,6 +114,8 @@ public:
             }
             if (inputType == CAMERA)
                 inputCapture.open(cameraID);
+                // inputCapture.set(CAP_PROP_FRAME_HEIGHT,720);
+                // inputCapture.set(CAP_PROP_FRAME_WIDTH,1280);
             if (inputType == VIDEO_FILE)
                 inputCapture.open(input);
             if (inputType != IMAGE_LIST && !inputCapture.isOpened())
@@ -293,7 +295,6 @@ int main(int argc, char* argv[])
     }
 
     int winSize = parser.get<int>("winSize");
-
     float grid_width = s.squareSize * (s.boardSize.width - 1);
     bool release_object = false;
     if (parser.has("d")) {
