@@ -1,4 +1,5 @@
 #include <iostream>
+#include <vector>
 
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/imgproc.hpp>
@@ -9,34 +10,51 @@
 #include "Volume.h"
 #include "MarchingCubes.h"
 
+#include "pose_estimation.h"
+
 int main()
 {
-	std::string filenameIn = "../data/background_subtraction/c_night_green_apple00.jpg";
+	//std::string filenameIn = "../data/background_subtraction/c_day_green_apple00.jpg";
+
+	String path("../data/background_subtraction/c_day_green_apple*.jpg");
+    vector<String> silNames;
+	glob(path,silNames,true);
+
 	std::string filenameOut = "result.off";
 
-	cv::Mat inputImage,pose;
-	inputImage=cv::imread(filenameIn,cv::IMREAD_GRAYSCALE);
+    std::vector<cv::Mat> popo;
+    obtainPoses(popo);
+
 	// implicit surface
 	ImplicitSurface* surface;
-	surface = new VoxelCarve(inputImage,pose);
+	surface = new VoxelCarve();
 
 	// fill volume with signed distance values
-	unsigned int mc_res = 100; // resolution of the grid, for debugging you can reduce the resolution (-> faster)
-	double margin=0.1;
-	double ratio=inputImage.size[1]/inputImage.size[0];
+	unsigned int mc_res = 50; // resolution of the grid, for debugging you can reduce the resolution (-> faster)
 
-	Volume vol(Vector3d(-0.1,-0.1,-0.1), Vector3d(1.1,1.1,1.1), (unsigned int)ratio*mc_res, mc_res, mc_res, 1);
-	for (unsigned int x = 0; x < vol.getDimX(); x++)
+	Volume vol(Vector3d(-1,-1,-1), Vector3d(501,501,501), mc_res,mc_res,mc_res, 1);
+
+	for(int i = 10;i<11;i++)
 	{
-		for (unsigned int y = 0; y < vol.getDimY(); y++)
+		cv::Mat silImage=imread(silNames[i],IMREAD_GRAYSCALE);
+		cv::Mat pose = popo[i];
+		for (unsigned int x = 0; x < vol.getDimX(); x++)
 		{
-			for (unsigned int z = 0; z < vol.getDimZ(); z++)
+			for (unsigned int y = 0; y < vol.getDimY(); y++)
 			{
-				Eigen::Vector3d p = vol.pos(x, y, z);
-				double val = surface->Eval(p);
-				vol.set(x,y,z, val);
+				for (unsigned int z = 0; z < vol.getDimZ(); z++)
+				{
+					if(vol.get(x,y,z)==1)
+					{
+						continue;
+					}
+					Eigen::Vector3d p = vol.pos(x, y, z);
+					double val = surface->Eval(p,silImage,pose);
+					vol.set(x,y,z, val);
+				}
 			}
 		}
+		std::cout<<"one done"<<std::endl;
 	}
 
 	// extract the zero iso-surface using marching cubes
