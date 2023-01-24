@@ -7,8 +7,8 @@ int obtainPoses(vector<cv::Mat> &poses)
    
     int markersX = 5;
     int markersY = 7;
-    float markerLength = 100;
-    float markerSeparation = 20;
+    float markerLength = 33;//mm
+    float markerSeparation = 7;//mm
     int dictionaryId = 15;
 
 
@@ -38,8 +38,7 @@ int obtainPoses(vector<cv::Mat> &poses)
     vector<Mat> images;
 
     glob(imagesPath,names,true);
-
-    for(int i = 0;i<16;i++)
+    for(unsigned int i = 0;i<names.size();i++)
     {
         Mat image, imageCopy,pose;
         image=imread(names[i],IMREAD_COLOR);
@@ -52,8 +51,8 @@ int obtainPoses(vector<cv::Mat> &poses)
         aruco::detectMarkers(image, dictionary, corners, ids, detectorParams, rejected);
 
         // refind strategy to detect more markers
-        aruco::refineDetectedMarkers(image, board, corners, ids, rejected, camMatrix,
-                                         distCoeffs);
+        // aruco::refineDetectedMarkers(image, board, corners, ids, rejected, camMatrix,
+        //                                  distCoeffs);
 
         // estimate board pose
         int markersOfBoardDetected = 0;
@@ -61,11 +60,14 @@ int obtainPoses(vector<cv::Mat> &poses)
             markersOfBoardDetected =
                 aruco::estimatePoseBoard(corners, ids, board, camMatrix, distCoeffs, rvec, tvec);
 
+        // if(markersOfBoardDetected > 0)
+        //     image.copyTo(imageCopy);
+        //     cv::drawFrameAxes(imageCopy, camMatrix, distCoeffs, rvec, tvec, axisLength);
+        //     cv::imwrite("outF.jpg", imageCopy);
+
         cv::Rodrigues(rvec,pose);
         hconcat(pose, tvec, pose);
-
 	    pose = camMatrix * pose;
-        // std::cout<<pose<<std::endl<<std::endl;
         poses.push_back(pose);
     }
     return 1;

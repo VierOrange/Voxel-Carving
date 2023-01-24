@@ -14,8 +14,14 @@
 
 int main()
 {
-	//std::string filenameIn = "../data/background_subtraction/c_day_green_apple00.jpg";
+	cv::Mat camMatrix, distCoeffs;
+    cv::String cameraDataPath="../config/out_camera_data.yml";
 
+	 bool readOk = readCameraParameters(cameraDataPath, camMatrix, distCoeffs);
+    if(!readOk) {
+        cerr << "Invalid camera file" << endl;
+        return 0;
+    }
 	String path("../data/background_subtraction/c_day_green_apple*.jpg");
     vector<String> silNames;
 	glob(path,silNames,true);
@@ -29,14 +35,16 @@ int main()
 	ImplicitSurface* surface;
 	surface = new VoxelCarve();
 
-	// fill volume with signed distance values
-	unsigned int mc_res = 50; // resolution of the grid, for debugging you can reduce the resolution (-> faster)
+	unsigned int mc_res = 100; // resolution of the grid, for debugging you can reduce the resolution (-> faster)
 
-	Volume vol(Vector3d(-1,-1,-1), Vector3d(501,501,501), mc_res,mc_res,mc_res, 1);
+	Volume vol(Vector3d(-1,-1,-1), Vector3d(301,301,301), mc_res,mc_res,mc_res, 1);
+	vol.clean();
 
-	for(int i = 10;i<11;i++)
+	cv::Mat undist_mask;
+	for(int i = 0;i<silNames.size();i++)
 	{
 		cv::Mat silImage=imread(silNames[i],IMREAD_GRAYSCALE);
+		cv::undistort(silImage, undist_mask, camMatrix, distCoeffs);
 		cv::Mat pose = popo[i];
 		for (unsigned int x = 0; x < vol.getDimX(); x++)
 		{
@@ -49,7 +57,7 @@ int main()
 						continue;
 					}
 					Eigen::Vector3d p = vol.pos(x, y, z);
-					double val = surface->Eval(p,silImage,pose);
+					double val = surface->Eval(p,undist_mask,pose);
 					vol.set(x,y,z, val);
 				}
 			}
