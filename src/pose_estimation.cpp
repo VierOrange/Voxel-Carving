@@ -1,10 +1,13 @@
 #include "pose_estimation.h"
 
+using namespace std;
+using namespace cv;
+
 const char* about = "Pose estimation using a ArUco Planar Grid board";
 
 int obtainPoses(vector<cv::Mat> &poses)
 {
-   
+    // these parameters should be passed in. 
     int markersX = 5;
     int markersY = 7;
     float markerLength = 33;//mm
@@ -26,8 +29,8 @@ int obtainPoses(vector<cv::Mat> &poses)
     detectorParams->cornerRefinementMethod = aruco::CORNER_REFINE_SUBPIX; // do corner refinement in markers
     Ptr<aruco::Dictionary> dictionary = aruco::getPredefinedDictionary(0);
     dictionary = aruco::getPredefinedDictionary(aruco::PREDEFINED_DICTIONARY_NAME(dictionaryId));
-    float axisLength = 0.5f * ((float)min(markersX, markersY) * (markerLength + markerSeparation) +
-                               markerSeparation);
+    // float axisLength = 0.5f * ((float)min(markersX, markersY) * (markerLength + markerSeparation) +
+                               // markerSeparation);
     // create board object
     Ptr<aruco::GridBoard> gridboard =
         aruco::GridBoard::create(markersX, markersY, markerLength, markerSeparation, dictionary);
@@ -55,10 +58,10 @@ int obtainPoses(vector<cv::Mat> &poses)
         //                                  distCoeffs);
 
         // estimate board pose
-        int markersOfBoardDetected = 0;
+        // int markersOfBoardDetected = 0;
         if(ids.size() > 0)
-            markersOfBoardDetected =
-                aruco::estimatePoseBoard(corners, ids, board, camMatrix, distCoeffs, rvec, tvec);
+            // markersOfBoardDetected =
+            aruco::estimatePoseBoard(corners, ids, board, camMatrix, distCoeffs, rvec, tvec);
 
         // if(markersOfBoardDetected > 0)
         //     image.copyTo(imageCopy);
@@ -67,9 +70,11 @@ int obtainPoses(vector<cv::Mat> &poses)
 
         cv::Rodrigues(rvec,pose);
         hconcat(pose, tvec, pose);
+        // poses should not contain the camera Matrix.
 	    pose = camMatrix * pose;
         poses.push_back(pose);
     }
+    // return value has no meaning
     return 1;
 }
 

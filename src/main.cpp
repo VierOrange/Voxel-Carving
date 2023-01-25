@@ -12,40 +12,47 @@
 
 #include "pose_estimation.h"
 
+using namespace std;
+using namespace cv;
+
 int main()
 {
 	cv::Mat camMatrix, distCoeffs;
-    cv::String cameraDataPath="../config/out_camera_data.yml";
+    const cv::String cameraDataPath="../config/out_camera_data.yml";
+	const std::string filenameOut = "result.off";
+	const String silPath("../data/background_subtraction/c_day_green_apple*.jpg");
 
-	 bool readOk = readCameraParameters(cameraDataPath, camMatrix, distCoeffs);
+	bool readOk = readCameraParameters(cameraDataPath, camMatrix, distCoeffs);
+
     if(!readOk) {
         cerr << "Invalid camera file" << endl;
         return 0;
     }
-	String path("../data/background_subtraction/c_day_green_apple*.jpg");
     vector<String> silNames;
-	glob(path,silNames,true);
+	glob(silPath,silNames,true);
 
-	std::string filenameOut = "result.off";
 
-    std::vector<cv::Mat> popo;
-    obtainPoses(popo);
+    std::vector<cv::Mat> poses;
+    // It's better to pass the file path to the obtainPoses function, the function should only get poses
+    obtainPoses(poses);
 
 	// implicit surface
-	ImplicitSurface* surface;
-	surface = new VoxelCarve();
+	ImplicitSurface* surface = new VoxelCarve();
 
-	unsigned int mc_res = 100; // resolution of the grid, for debugging you can reduce the resolution (-> faster)
+	const unsigned int mc_res = 50; // resolution of the grid, for debugging you can reduce the resolution (-> faster)
 
+    // why define the positive z axis and then transform?
 	Volume vol(Vector3d(-1,-1,-1), Vector3d(301,301,301), mc_res,mc_res,mc_res, 1);
 	vol.clean();
 
-	cv::Mat undist_mask;
-	for(int i = 0;i<silNames.size();i++)
+    // meaning of variable name?
+	cv::Mat undist_sil;
+    size_t silCount = silNames.size();
+	for(size_t i = 0; i < silCount; i++)
 	{
 		cv::Mat silImage=imread(silNames[i],IMREAD_GRAYSCALE);
-		cv::undistort(silImage, undist_mask, camMatrix, distCoeffs);
-		cv::Mat pose = popo[i];
+		cv::undistort(silImage, undist_sil, camMatrix, distCoeffs);
+		cv::Mat pose = poses[i];
 		for (unsigned int x = 0; x < vol.getDimX(); x++)
 		{
 			for (unsigned int y = 0; y < vol.getDimY(); y++)
@@ -57,7 +64,8 @@ int main()
 						continue;
 					}
 					Eigen::Vector3d p = vol.pos(x, y, z);
-					double val = surface->Eval(p,undist_mask,pose);
+                    // better do transformation here
+					double val = surface->Eval(p,undist_sil,pose);
 					vol.set(x,y,z, val);
 				}
 			}
