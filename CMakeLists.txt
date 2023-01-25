@@ -3,6 +3,10 @@ cmake_minimum_required( VERSION 3.0 )
 project( Voxel_Carving )
 
 find_package( OpenCV REQUIRED )
+find_package(Eigen3 REQUIRED)
+
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
 
 include_directories( ${OpenCV_INCLUDE_DIRS} include )
 file( GLOB SRC "src/*.cpp" )
@@ -17,5 +21,9 @@ add_executable( camera_calibration src/camera_calibration.cpp )
 target_link_libraries( camera_calibration ${OpenCV_LIBS} )
 add_executable( background_subtraction src/backgroundSub.cpp )
 target_link_libraries( background_subtraction ${OpenCV_LIBS} )
+add_executable( pose_estimation_aruco_board_image_list src/pose_estimation_aruco_board_image_list.cpp )
+target_link_libraries( pose_estimation_aruco_board_image_list ${OpenCV_LIBS} )
+add_executable(voxel_carving src/main.cpp src/Volume.cpp)
+target_link_libraries(voxel_carving ${OpenCV_LIBS} Eigen3::Eigen)
 
 
