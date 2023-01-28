@@ -412,7 +412,7 @@ int Polygonise(MC_Gridcell grid, double isolevel, MC_Triangle* triangles) {
 }
 
 
-bool ProcessVolumeCell(Volume* vol, int x, int y, int z, double iso, SimpleMesh* mesh)
+bool ProcessVolumeCell(const Volume* vol, int x, int y, int z, double iso, SimpleMesh* mesh)
 {
 	MC_Gridcell cell;
 
