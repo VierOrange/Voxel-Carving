@@ -15,10 +15,12 @@
 using namespace std;
 using namespace cv;
 
-double eval(const Eigen::Vector3d &p, const cv::Mat undistSilhouette, const cv::Mat projectionMatrix)
+// int nFlag = 0;
+double eval(const Eigen::Vector3d& p, const cv::Mat& undistSilhouette, const cv::Mat& projectionMatrix)
 {
 	if (p[0]<0||p[0]>300||p[1]<0||p[1]>300||p[2]<0||p[2]>300)
 	{
+        // nFlag = 1;
 		return 1;
 	}
 
@@ -78,7 +80,7 @@ void obtainProjections(vector<cv::Mat> &projections, const Mat& camMatrix, const
 	}
 }
 
-void carve(Volume& vol, const Mat& camMatrix, const Mat& distCoeffs, const vector<Mat> projections, const vector<String>& silNames)
+void carve(Volume& vol, const Mat& camMatrix, const Mat& distCoeffs, const vector<Mat>& projections, const vector<String>& silNames)
 {
 	cout<<"Start carving..."<<endl;
 	size_t silCount = silNames.size();
@@ -95,6 +97,10 @@ void carve(Volume& vol, const Mat& camMatrix, const Mat& distCoeffs, const vecto
 					}
 					Eigen::Vector3d p = vol.pos(x, y, z);
 					double val = eval(p, undistSilhouette, projections[i]);
+                    // if (nFlag == 1) {
+                    //     cout << "(" << x << ", " << y << ", " << z << ")" << endl;
+                    //     nFlag = 0;
+                    // }
 
 					vol.set(x, y, z, val);
 				}
@@ -102,7 +108,6 @@ void carve(Volume& vol, const Mat& camMatrix, const Mat& distCoeffs, const vecto
 		}
 		std::cout << "Image " << i+1 << "/" << silCount << std::endl;
 	}
-	cout<<"Carving done."<<endl;
 }
 
 bool writeMesh(const Volume& vol, const String& filenameOut = "result.off")
@@ -122,7 +127,6 @@ bool writeMesh(const Volume& vol, const String& filenameOut = "result.off")
 		}
 	}
 	cout << "Marching Cubes on slice " << vol.getDimX() << " of " << vol.getDimX() << std::endl;
-	cout<<"Mesh done."<<endl;
 	return mesh.WriteMesh(filenameOut);
 }
 
@@ -149,14 +153,18 @@ int main()
 	const unsigned int mc_res = 50; // resolution of the grid, for debugging you can reduce the resolution (-> faster)
 	const unsigned int mc_length=300; //mm
 
-	Volume vol(Vector3d(-1, -1, -1), Vector3d(mc_length+1,mc_length+1,mc_length+1), mc_res, mc_res, mc_res, 1);
+    Volume vol(Vector3d(-1, -1, -1), Vector3d(mc_length+1,mc_length+1,mc_length+1), mc_res, mc_res, mc_res, 1);
+	// Volume vol(Vector3d(0, 0, 0), Vector3d(mc_length, mc_length, mc_length), mc_res, mc_res, mc_res, 1);
 	vol.clean();
 
 	carve(vol, camMatrix, distCoeffs, projections, silNames);
+	cout<<"Carving done."<<endl;
+
 	if (!writeMesh(vol, filenameOut)) {
 		std::cout << "ERROR: unable to write mesh!" << std::endl;
 		return -1;
 	}
+	cout<<"Mesh done."<<endl;
 
 	return 0;
 }
