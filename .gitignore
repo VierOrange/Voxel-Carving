@@ -39,3 +39,6 @@ include/opencv2
 
 # VScode folder
 /.vscode
+
+# Cache files folder
+/.cache
