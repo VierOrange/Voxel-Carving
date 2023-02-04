@@ -12,8 +12,8 @@ public:
 
     bool initialize();
     void obtainProjections();
-    void carve();
-    bool writeMesh();
+    void carve() const;
+    bool writeMesh() const;
 
 private:
     cv::String configFile;
