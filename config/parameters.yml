@@ -1,0 +1,13 @@
+%YAML:1.0
+---
+cameraDataPath: "config/out_camera_data.yml"
+silPath: "data/background_subtraction/c_day_green_apple*.jpg"
+imagesPath: "data/background_subtraction/day_green_apple*.jpg"
+filenameOut: "result.off"
+resolution: 50
+mc_length: 300
+markersX: 5
+markersY: 7
+markerLength: 33
+markerSeparation: 7
+dictionaryId: 15
