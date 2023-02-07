@@ -2,7 +2,6 @@
 #include "aruco_samples_utility.hpp"
 #include "SimpleMesh.h"
 #include "Eigen.h"
-#include <opencv2/core.hpp>
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/imgproc.hpp>
 #include <opencv2/highgui.hpp>
@@ -100,7 +99,7 @@ bool VoxelCarving::readParameters()
     return true;
 }
 
-void VoxelCarving::carve()
+void VoxelCarving::carve() const
 {
 	size_t silCount = silNames.size();
 	for(size_t i = 0; i < silCount; i++) {
@@ -126,7 +125,7 @@ void VoxelCarving::carve()
 
 extern bool ProcessVolumeCell(const Volume* vol, int x, int y, int z, double iso, SimpleMesh* mesh);
 
-bool VoxelCarving::writeMesh()
+bool VoxelCarving::writeMesh() const
 {
 	cout<<"Start building mesh..."<<endl;
 	SimpleMesh mesh;
