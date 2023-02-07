@@ -23,7 +23,9 @@ private:
     cv::String imagesPath;
     cv::String filenameOut;
     int mc_res;
-    int mc_length;
+    int mc_length_x;
+    int mc_length_y;
+    int mc_length_z;
 
     int markersX;
     int markersY;

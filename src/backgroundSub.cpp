@@ -255,15 +255,16 @@ void framesSubtraction(vector<String> names,float th)
         contour(image1,20000,450000000,false,false);
 
         ostringstream ss;
-        int pos = names[i].find("\\");
-        ss <<names[i].substr(0,pos+1)<<"c_"<<names[i].substr(pos+1);
+        // int pos = names[i].find("\\");
+        // ss <<names[i].substr(0,pos+1)<<"c_"<<names[i].substr(pos+1);
+        ss << "mask" << i + 1;
         String filename = ss.str();
         imwrite(filename,image1);
     }
 }
 int main(int argc, char* argv[])
 {
-    String path("../data/pineapple/pineapple_*.jpg");
+    String path("data/pineapple/pineapple_*.jpg");
     vector<String> names;
     vector<Mat> images;
 

@@ -30,7 +30,7 @@ bool VoxelCarving::initialize()
 	}
     cv::glob(imagesPath, imageNames, false);
     cv::glob(silPath, silNames, false);
-    pVol = new Volume(Vector3d(-1, -1, -1), Vector3d(mc_length+1,mc_length+1,mc_length+1), mc_res, mc_res, mc_res, 1);
+    pVol = new Volume(Vector3d(-1, -1, -1), Vector3d(mc_length_x+1,mc_length_y+1,mc_length_z+1), mc_res, mc_res, mc_res, 1);
 	pVol->clean();
     return true;
 }
@@ -87,7 +87,9 @@ bool VoxelCarving::readParameters()
     fs["imagesPath"] >> imagesPath;
     fs["filenameOut"] >> filenameOut;
     fs["resolution"] >> mc_res;
-    fs["mc_length"] >> mc_length;
+    fs["mc_length_x"] >> mc_length_x;
+    fs["mc_length_y"] >> mc_length_y;
+    fs["mc_length_z"] >> mc_length_z;
 
     fs["markersX"] >> markersX;
     fs["markersY"] >> markersY;
