@@ -22,8 +22,8 @@ void removePixels(Mat &image,int th,float con_th)
             g = pixel[j][1];
             b = pixel[j][0];
 
-            // if ((r<th&&b<th&&g<th)||(abs((r+1)/(g+1)-(r+1)/(b+1))<0.1))
-            if ((r<th&&b<th&&g<th)||(abs((r+1)/(g+1))>con_th&&abs((g+1)/(b+1))>con_th&&abs((b+1)/(r+1))>con_th))
+            if ((r<th&&b<th&&g<th)||(abs((r+1)/(g+1)-(r+1)/(b+1))<con_th))
+            // if ((r<th&&b<th&&g<th)||(abs((r+1)/(g+1))>con_th&&abs((g+1)/(b+1))>con_th&&abs((b+1)/(r+1))>con_th))
             {
                 pixel[j][2]=(uchar)255;
                 pixel[j][1]=(uchar)255;
@@ -192,7 +192,7 @@ void colorSegmentation(vector<String> names)
     {
         Mat image=imread(names[i],IMREAD_COLOR);
         //imwrite("step0.jpg",image);
-        removePixels(image,20,0.93);
+        removePixels(image,20,0.1);
         // imwrite("step1.jpg",image);
 
         preProcess(image,200);
@@ -200,12 +200,14 @@ void colorSegmentation(vector<String> names)
 
         shrink(image);
         contour(image,1000000,10000000000,true,false);
+        // contour(image,1,10000000000,true,false);
         grow(image);
         // imwrite("step3.jpg",image);
 
         ostringstream ss;
-        int pos = names[i].find("\\");
-        ss <<names[i].substr(0,pos+1)<<"c_"<<names[i].substr(pos+1);
+        int pos = names[i].find("_");
+        ss <<names[i].substr(0,pos)<<"Mask_"<<names[i].substr(pos+1);
+        // ss << "mask" << i + 1;
         String filename = ss.str();
         imwrite(filename,image);
         cout<<i+1<<"/"<<names.size()<<endl;
@@ -255,9 +257,8 @@ void framesSubtraction(vector<String> names,float th)
         contour(image1,20000,450000000,false,false);
 
         ostringstream ss;
-        // int pos = names[i].find("\\");
-        // ss <<names[i].substr(0,pos+1)<<"c_"<<names[i].substr(pos+1);
-        ss << "mask" << i + 1;
+        int pos = names[i].find("\\");
+        ss <<names[i].substr(0,pos+1)<<"c_"<<names[i].substr(pos+1);
         String filename = ss.str();
         imwrite(filename,image1);
     }
