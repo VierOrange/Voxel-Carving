@@ -10,7 +10,7 @@
 using namespace cv;
 using namespace std;
 
-void removePixels(Mat &image,int th)
+void removePixels(Mat &image,int th,float con_th)
 {
     float r, g, b;
     for (int i = 0; i < image.rows; ++i)
@@ -22,7 +22,8 @@ void removePixels(Mat &image,int th)
             g = pixel[j][1];
             b = pixel[j][0];
 
-            if ((r<th&&b<th&&g<th)||(abs((r+1)/(g+1)-(r+1)/(b+1))<0.1))
+            // if ((r<th&&b<th&&g<th)||(abs((r+1)/(g+1)-(r+1)/(b+1))<0.1))
+            if ((r<th&&b<th&&g<th)||(abs((r+1)/(g+1))>con_th&&abs((g+1)/(b+1))>con_th&&abs((b+1)/(r+1))>con_th))
             {
                 pixel[j][2]=(uchar)255;
                 pixel[j][1]=(uchar)255;
@@ -53,16 +54,28 @@ void preProcess(Mat & image,int th)
     threshold(image,image,th, 255, THRESH_BINARY_INV);      
 }
 
+void shrink(Mat & image)
+{
+    blur(image,image,Size(9,9));
+    
+    Mat kernel=getStructuringElement(MORPH_RECT, Size(5, 5));
+
+    morphologyEx(image,image,MORPH_CLOSE, kernel);
+    
+    erode(image,image,kernel,Point(-1,-1),10);
+    dilate(image,image,kernel,Point(-1,-1),10);
+   
+}
 void grow(Mat & image)
 {
     blur(image,image,Size(9,9));
     
-    Mat kernel=getStructuringElement(MORPH_RECT, Size(3, 3));
+    Mat kernel=getStructuringElement(MORPH_RECT, Size(5, 5));
 
     morphologyEx(image,image,MORPH_CLOSE, kernel);
     
-    erode(image,image,kernel,Point(-1,-1),5);
-    dilate(image,image,kernel,Point(-1,-1),5);
+    dilate(image,image,kernel,Point(-1,-1),10);
+    erode(image,image,kernel,Point(-1,-1),10);
    
 }
 
@@ -178,21 +191,24 @@ void colorSegmentation(vector<String> names)
     for(size_t i = 0;i<names.size();i++)
     {
         Mat image=imread(names[i],IMREAD_COLOR);
-        imwrite("step0.jpg",image);
-        removePixels(image,20);
-        imwrite("step1.jpg",image);
+        //imwrite("step0.jpg",image);
+        removePixels(image,20,0.93);
+        // imwrite("step1.jpg",image);
 
         preProcess(image,200);
-        imwrite("step2.jpg",image);
+        // imwrite("step2.jpg",image);
 
-        contour(image,100000,1000000,true,false);
-        imwrite("step3.jpg",image);
+        shrink(image);
+        contour(image,1000000,10000000000,true,false);
+        grow(image);
+        // imwrite("step3.jpg",image);
 
         ostringstream ss;
         int pos = names[i].find("\\");
         ss <<names[i].substr(0,pos+1)<<"c_"<<names[i].substr(pos+1);
         String filename = ss.str();
         imwrite(filename,image);
+        cout<<i+1<<"/"<<names.size()<<endl;
     }
 }
 
@@ -247,13 +263,13 @@ void framesSubtraction(vector<String> names,float th)
 }
 int main(int argc, char* argv[])
 {
-    String path("../data/background_subtraction/sub/day_green_apple*.jpg");
+    String path("../data/pineapple/pineapple_*.jpg");
     vector<String> names;
     vector<Mat> images;
 
     glob(path,names,true);
 
-    // framesSubtraction(names,18);
+    //framesSubtraction(names,7);
     colorSegmentation(names);
     waitKey(0);
     return 0;
