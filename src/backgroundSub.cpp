@@ -10,7 +10,7 @@
 using namespace cv;
 using namespace std;
 
-void removePixels(Mat &image)
+void removePixels(Mat &image,int th)
 {
     float r, g, b;
     for (int i = 0; i < image.rows; ++i)
@@ -22,7 +22,7 @@ void removePixels(Mat &image)
             g = pixel[j][1];
             b = pixel[j][0];
 
-            if (abs((r+1)/(b+1)-(r+1)/(g+1))<0.2)
+            if ((r<th&&b<th&&g<th)||(abs((r+1)/(g+1)-(r+1)/(b+1))<0.1))
             {
                 pixel[j][2]=(uchar)255;
                 pixel[j][1]=(uchar)255;
@@ -31,6 +31,19 @@ void removePixels(Mat &image)
 
         }
     }
+}
+Mat removePixelsbyRange(Mat &image,Scalar min,Scalar max)
+{
+    Mat mask;
+    inRange(image, min, max, mask);
+    return mask;
+}
+
+Mat chosePixels(Mat image,Scalar min, Scalar max)
+{
+    Mat mask;
+    inRange(image, min, max, mask); 
+    return ~mask;
 }
 
 void preProcess(Mat & image,int th)
@@ -44,12 +57,12 @@ void grow(Mat & image)
 {
     blur(image,image,Size(9,9));
     
-    Mat kernel=getStructuringElement(MORPH_RECT, Size(1, 1));
+    Mat kernel=getStructuringElement(MORPH_RECT, Size(3, 3));
 
     morphologyEx(image,image,MORPH_CLOSE, kernel);
     
-    dilate(image,image,kernel,Point(-1,-1),4);
-    erode(image,image,kernel,Point(-1,-1),4);
+    erode(image,image,kernel,Point(-1,-1),5);
+    dilate(image,image,kernel,Point(-1,-1),5);
    
 }
 
@@ -64,7 +77,8 @@ void contour(Mat &image,double minV,double maxV,bool inv=false,bool line=true)
         double area = contourArea(itr);
         double premier = arcLength(itr,true);
 
-        if(maxV<area||area<minV||4*M_PI*area/pow(premier,2)<0.5)
+        //||4*M_PI*area/pow(premier,2)<0.5
+        if(maxV<area||area<minV)
         {
             itr.setTo(Scalar(0));
         }
@@ -101,7 +115,7 @@ Mat getMask(Mat image)
     preProcess(image,125);
     Mat mask = image;
     contour(mask,100000,500000,false);
-    return mask;
+    return ~mask;
 }
 
 Mat applyMask(Mat image,Mat mask)
@@ -139,29 +153,108 @@ void gradient(Mat & image)
     convertScaleAbs(image,image);   
 }
 
+float sub2HSVVec(Vec3f sub1,Vec3f sub2)
+{
+    Vec3f v = sub1-sub2;
+    float h_w = 1;
+    float s_w = 0.8;
+    float v_w = 0.6;
+
+    float tmph = abs(v[0]);
+    if(tmph>230)
+    {
+        tmph=0.5*(255-tmph);
+    }
+    return (h_w*tmph+s_w*abs(v[1])+v_w*abs(v[2]))/3;
+}
+float sub2RGBVec(Vec3f sub1,Vec3f sub2)
+{
+    Vec3f v = sub1-sub2;
+
+    return (abs(v[0])+abs(v[1])+abs(v[2]))/3;
+}
+void colorSegmentation(vector<String> names)
+{
+    for(size_t i = 0;i<names.size();i++)
+    {
+        Mat image=imread(names[i],IMREAD_COLOR);
+        imwrite("step0.jpg",image);
+        removePixels(image,20);
+        imwrite("step1.jpg",image);
+
+        preProcess(image,200);
+        imwrite("step2.jpg",image);
+
+        contour(image,100000,1000000,true,false);
+        imwrite("step3.jpg",image);
+
+        ostringstream ss;
+        int pos = names[i].find("\\");
+        ss <<names[i].substr(0,pos+1)<<"c_"<<names[i].substr(pos+1);
+        String filename = ss.str();
+        imwrite(filename,image);
+    }
+}
+
+void framesSubtraction(vector<String> names,float th)
+{
+    for(size_t i = 0;i<names.size();i+=2)
+    {
+        Mat image0=imread(names[i],IMREAD_COLOR);
+        Mat image1=imread(names[i+1],IMREAD_COLOR);
+
+        // removePixels(image0,200);
+        // removePixels(image1,200);
+        // cv::cvtColor(image0, image0, cv::COLOR_BGR2HSV);
+        // Mat mask = removePixelsbyRange(image0,Scalar(0,0,0),Scalar(255, 50, 90));
+        // imwrite("step0.jpg",mask);
+
+        cv::cvtColor(image0, image0, cv::COLOR_BGR2HSV);
+        cv::cvtColor(image1, image1, cv::COLOR_BGR2HSV);
+
+        // cv::cvtColor(image0, image0, cv::COLOR_BGR2RGB);
+        // cv::cvtColor(image1, image1, cv::COLOR_BGR2RGB);
+
+        blur(image0,image0,Size(9,9));
+        blur(image1,image1,Size(9,9));
+        
+        for(int i=0; i<image0.rows; i++)
+        {
+            for(int j=0; j<image0.cols; j++) 
+            {
+                Vec3f sub1 = image0.at<Vec3b>(i,j);
+                Vec3f sub2 = image1.at<Vec3b>(i,j);
+                if (sub2HSVVec(sub1,sub2)<th)
+                {
+                    image1.at<Vec3b>(i,j)=Vec3b(0,0,0);
+                }else
+                {
+                    image1.at<Vec3b>(i,j)=Vec3b(255,255,255);
+                }
+            }
+
+        }
+        //grow(image1);
+        preProcess(image1,125);
+        contour(image1,20000,450000000,false,false);
+
+        ostringstream ss;
+        int pos = names[i].find("\\");
+        ss <<names[i].substr(0,pos+1)<<"c_"<<names[i].substr(pos+1);
+        String filename = ss.str();
+        imwrite(filename,image1);
+    }
+}
 int main(int argc, char* argv[])
 {
-    String path("../data/background_subtraction/night_green_apple0*.jpg");
+    String path("../data/background_subtraction/sub/day_green_apple*.jpg");
     vector<String> names;
     vector<Mat> images;
 
     glob(path,names,true);
 
-    for(int i = 0;i<names.size();i++)
-    {
-        Mat image = imread(names[i],IMREAD_COLOR);
-
-        removePixels(image);
-        
-        preProcess(image,200);
-
-        contour(image,10000,70000,true,false);
-
-        ostringstream ss;
-        ss << "../data/background_subtraction/c_night_green_apple0" << i<<".jpg";
-        String filename = ss.str();
-        imwrite(filename,image);
-    }
+    // framesSubtraction(names,18);
+    colorSegmentation(names);
     waitKey(0);
     return 0;
 }
